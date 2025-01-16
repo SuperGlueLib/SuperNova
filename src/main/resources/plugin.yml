@@ -1,0 +1,8 @@
+name: '${project_name}'
+author: SuperPenguin
+version: '${version}'
+main: com.github.supergluelib.supernova.SuperNovaMain
+api-version: '1.20'
+description: Data holder library/dependency for the SuperSuite!
+libraries:
+  - "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
