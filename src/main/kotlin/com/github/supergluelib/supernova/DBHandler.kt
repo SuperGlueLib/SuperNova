@@ -14,7 +14,7 @@ internal class DBHandler(val plugin: SuperNovaMain) {
     internal val pluginEntries: HashMap<NamespacedKey, String> = hashMapOf()
     internal val playerEntries: HashMap<PlayerKey, String> = hashMapOf()
 
-    internal fun loadEntries(plugin: JavaPlugin): Unit = TODO()
+    internal fun loadEntries(plugin: JavaPlugin): Unit = TODO() // LOAD ALL PLUGINS ON STARTUP.
     internal fun loadEntries(uuid: UUID): Unit = TODO()
 
 
