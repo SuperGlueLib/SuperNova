@@ -31,7 +31,7 @@ tasks {
         }
     }
     shadowJar {
-        minimize()
+//        minimize()  // Used as dependency
         dependencies {
             exclude(dependency("org.jetbrains.kotlin::"))
         }
