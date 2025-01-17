@@ -11,7 +11,7 @@ class SuperNovaMain: JavaPlugin() {
     override fun onEnable() {
         instance = this
 
-
+        SuperNova // Load
     }
 
 }
