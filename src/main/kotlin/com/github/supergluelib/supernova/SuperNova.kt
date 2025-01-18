@@ -13,6 +13,8 @@ object SuperNova {
     private fun JavaPlugin.playerkey(uuid: UUID, key: String) = PlayerKey(this.name, uuid, key)
 
     internal fun loadPlayer(player: Player) = db.loadEntries(player.uniqueId)
+    internal fun unloadPlayer(player: Player) = db.unloadEntries(player.uniqueId)
+
 
     data class PlayerKey(val pluginName: String, val uuid: UUID, val key: String) {
         constructor(plugin: JavaPlugin, uuid: UUID, key: String): this(plugin.name, uuid, key)

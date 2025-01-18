@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 
 class SuperNovaMain: JavaPlugin(), Listener {
@@ -24,6 +25,10 @@ class SuperNovaMain: JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun loadPlayerOnJoin(event: PlayerJoinEvent) {
         SuperNova.loadPlayer(event.player)
+    }
+
+    fun unloadPlayer(event: PlayerQuitEvent) {
+        SuperNova.unloadPlayer(event.player)
     }
 
 }
