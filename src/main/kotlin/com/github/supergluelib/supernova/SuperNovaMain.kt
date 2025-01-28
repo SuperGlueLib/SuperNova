@@ -27,6 +27,7 @@ class SuperNovaMain: JavaPlugin(), Listener {
         SuperNova.loadPlayer(event.player)
     }
 
+    @EventHandler
     fun unloadPlayer(event: PlayerQuitEvent) {
         SuperNova.unloadPlayer(event.player)
     }

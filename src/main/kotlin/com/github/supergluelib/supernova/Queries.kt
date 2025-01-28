@@ -6,12 +6,13 @@ internal class Queries(val db: SQLiteDatabase) {
     val INSERT_UUID_MAPPING = db.prepareStatement("INSERT OR IGNORE INTO uuid_mapping(uuid) VALUES(?);")
     val INSERT_NAMESPACE_MAPPING = db.prepareStatement("INSERT OR IGNORE INTO namespace_mapping(namespace) VALUES(?);")
 
-    /** Namespace (text), key (text), value (text) */ // could use 'INSERT OR IGNORE INTO namespace_mapping RETURNING id' or however it is structured.
+    /** Namespace (text), key (text), value (text) */
     val INSERT_PLUGIN_ENTRY = db.prepareStatement("INSERT OR REPLACE INTO plugin_data SELECT (SELECT id FROM namespace_mapping WHERE namespace = ?), ?, ?;")
+
     /** key(text), value(text), namespace(text), uuid(UUID), */
     val INSERT_PLAYER_ENTRY = db.prepareStatement("""
         INSERT OR REPLACE INTO player_data 
-            SELECT (nm.id, um.id, ?, ?)
+            SELECT nm.id, um.id, ?, ?
             FROM namespace_mapping nm
             JOIN uuid_mapping um
             WHERE nm.namespace = ? AND um.uuid = ?
