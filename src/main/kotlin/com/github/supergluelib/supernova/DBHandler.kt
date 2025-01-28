@@ -2,20 +2,28 @@ package com.github.supergluelib.supernova
 
 import com.github.supergluelib.foundation.database.SQLiteDatabase
 import com.github.supergluelib.foundation.extensions.executeQuery
+import com.github.supergluelib.foundation.extensions.executeUpdate
 import com.github.supergluelib.foundation.extensions.toUUID
 import com.github.supergluelib.supernova.SuperNova.PlayerKey
 import org.bukkit.NamespacedKey
 import java.io.File
 import java.util.*
+import kotlin.jvm.java
+
+// TODO: Make a uuid: Int and String: Int map that loads the DB mapping ID of the values on relevant load.
 
 internal class DBHandler(val plugin: SuperNovaMain) {
     private val db = SQLiteDatabase(File(plugin.dataFolder, "data.sqlite"))
+    private val queries = Queries(db)
 
     private val pluginEntries: HashMap<NamespacedKey, String> = hashMapOf()
     private val playerEntries: HashMap<PlayerKey, String> = hashMapOf()
 
+    private val registeredPlugins = hashSetOf<String>()
+
     internal fun loadEntries(uuid: UUID) {
-        val rs = GET_BY_UUID_QUERY.executeQuery(uuid to UUID::class.java)
+        queries.INSERT_UUID_MAPPING.executeUpdate(uuid to UUID::class.java)
+        val rs = queries.GET_ENTRIES_BY_UUID.executeQuery(uuid to UUID::class.java)
         while (rs.next()) {
             val key = PlayerKey(rs.getString("namespace"), rs.getString("uuid").toUUID()!!, rs.getString("key"))
             playerEntries[key] = rs.getString("value")
@@ -28,72 +36,44 @@ internal class DBHandler(val plugin: SuperNovaMain) {
     }
 
     init {
-        createTables()
-        // TODO: Load Plugins
+        queries.createTables()
+        val rs = db.prepareStatement("""
+            SELECT (namespace_mapping.namespace, key, value) 
+            FROM plugin_data
+            JOIN namespace_mapping ON namespace_mapping.id = plugin_data.namespace
+        """.trimIndent()).executeQuery()
+
+        while (rs.next()) {
+            val key = NamespacedKey(rs.getString("namespace"), rs.getString("key"))
+            pluginEntries[key] = rs.getString("value")
+        }
+
+        registeredPlugins.addAll(pluginEntries.map { it.key.namespace })
     }
 
+    /**
+     * Write a plugin data entry to the db. Will overwrite existing entries with this key.
+     */
     fun writePluginEntry(key: NamespacedKey, value: String) { // Can be new or existing, will overwrite.
         pluginEntries[key] = value
-        // TODO: SQL
+        if (key.namespace !in registeredPlugins) {
+            registeredPlugins.add(key.namespace)
+            queries.INSERT_NAMESPACE_MAPPING.executeUpdate(key.namespace to String::class.java)
+        }
+        // TODO: Async?
+        queries.INSERT_PLUGIN_ENTRY.executeUpdate(key.namespace to String::class.java, key.key to String::class.java, value to String::class.java)
     }
 
+    /**
+     * Write a player data entry to the db. Will overwrite existing values.
+     */
     fun writePlayerEntry(key: PlayerKey, value: String) {
         playerEntries[key] = value
-        // TODO: SQL
+        // TODO: Async?
+        queries.INSERT_PLAYER_ENTRY.executeUpdate(key.key to String::class.java, value to String::class.java, key.pluginName to String::class.java, key.uuid to UUID::class.java)
     }
 
     fun readPluginEntry(key: NamespacedKey): String? = pluginEntries[key]
     fun readPlayerEntry(key: PlayerKey): String? = playerEntries[key]
-
-    // EXPLAIN QUERY PLAN SELECT * FROM main_data WHERE id = 1;
-    // INSERT OR IGNORE
-
-    private val GET_BY_UUID_QUERY = db.prepareStatement("""
-        SELECT (namespace_mapping.namespace, uuid_mapping.uuid, key, value) 
-        FROM player_data
-        JOIN namespace_mapping ON player_data.namespace = namespace_mapping.id
-        JOIN uuid_mapping ON player_data.uuid = uuid_mapping.id
-        WHERE uuid_mapping.uuid = ?;"
-    """.trimIndent())
-
-    private val INSERT_UUID_QUERY = db.prepareStatement("INSERT OR IGNORE INTO uuid_mapping (uuid) VALUES (?);")
-
-    private fun createTables() {
-        db.prepareStatement("""
-            CREATE TABLE IF NOT EXISTS namespace_mapping(
-              id INT PRIMARY KEY AUTOINCREMENT,
-              namespace TEXT NOT NULL UNIQUE
-            );
-        """.trimIndent()).execute()
-
-        db.prepareStatement("""
-            CREATE TABLE IF NOT EXISTS uuid_mapping(
-              id INT PRIMARY KEY AUTOINCREMENT,
-              uuid CHAR(36) NOT NULL UNIQUE
-            );
-        """.trimIndent()).execute()
-
-        db.prepareStatement("""
-          CREATE TABLE IF NOT EXISTS plugin_data(
-            namespace INT NOT NULL,
-            key TEXT NOT NULL,
-            value TEXT NOT NULL,
-            PRIMARY KEY (namespace, key),
-            FOREIGN KEY (namespace) REFERENCES namespace_mapping (id) 
-          );
-    """.trimIndent()).execute()
-
-        db.prepareStatement("""
-            CREATE TABLE IF NOT EXISTS player_data(
-              namespace INT NOT NULL,
-              uuid INT NOT NULL,
-              key TEXT NOT NULL,
-              value TEXT NOT NULL,
-              PRIMARY KEY (namespace, uuid, key),
-              FOREIGN KEY (namespace) REFERENCES namespace_mapping (id),
-              FOREIGN KEY (uuid) REFERENCES uuid_mapping (id)
-            )
-        """.trimIndent()).execute()
-    }
 
 }
