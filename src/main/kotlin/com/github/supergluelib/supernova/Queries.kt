@@ -2,7 +2,7 @@ package com.github.supergluelib.supernova
 
 import com.github.supergluelib.foundation.database.SQLiteDatabase
 
-class Queries(val db: SQLiteDatabase) {
+internal class Queries(val db: SQLiteDatabase) {
     val INSERT_UUID_MAPPING = db.prepareStatement("INSERT OR IGNORE INTO uuid_mapping(uuid) VALUES(?);")
     val INSERT_NAMESPACE_MAPPING = db.prepareStatement("INSERT OR IGNORE INTO namespace_mapping(namespace) VALUES(?);")
 
